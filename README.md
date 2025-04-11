@@ -1,69 +1,94 @@
-# 邮件分类项目
+# CBOW 文本分类项目技术细节
 
-## 一、核心功能
-本项目成功搭建了一套基于朴素贝叶斯算法的邮件分类系统，它能够精准识别邮件，将其区分为垃圾邮件（spam）与正常邮件（ham）两类。
+## Vocabulary 类
 
-## 二、算法基础
-### （一）多项式朴素贝叶斯分类器
-本项目采用多项式朴素贝叶斯（Multinomial Naive Bayes）分类器，其依托两个关键假设：
-- **特征条件独立性假设**：在给定邮件类别的情况下，各个特征之间相互独立，即一个特征的出现与否不会影响其他特征出现的概率。
-- **多项式分布假设**：特征以词频计数的形式呈现，用于描述邮件文本中词语出现的统计特性。
+1. **问题**: 在 Vocabulary 类中，mask_token 对应的索引通过调用 add_token 方法赋值的 self.___属性。  
+   **答案**: `self.mask_index`
 
-### （二）贝叶斯定理的应用
-在邮件分类过程中，贝叶斯定理的应用形式为：P(Class|Document) \ P(Document|Class)*P(Class)。
-- P(Class)代表类别的先验概率，即根据已有数据统计得到的邮件属于某一类（垃圾邮件或正常邮件）的概率。
-- P(Document|Class) = \prod P(Word|Class)，基于特征条件独立性假设，它表示在已知邮件类别的情况下，文档中各个单词出现的概率乘积。
-- P(Class|Document)是给定文档属于某类的后验概率，通过计算该值来判断邮件属于垃圾邮件还是正常邮件。
+2. **问题**: lookup_token 方法中，如果 self.mk_index=40，则对未登录词返回 ___.  
+   **答案**: `40` 或 `self.mk_index`
 
-## 三、数据处理流程
-1. **分词处理**：利用中文分词工具（如jieba）对邮件文本进行处理，将连续的文本分割成一个个独立的词语，形成词语序列。
-2. **停用词过滤**：从邮件文本中去除那些常见的无实际意义的词汇，比如“的”“是”“了”等，以减少数据噪声，提高分类效率。
-3. **文本清洗**：通过特定的规则和方法，去除邮件文本中的标点符号、数字以及其他非文本内容，使文本更加纯净，便于后续处理。
-4. **特征构建**：根据选定的方法，将处理后的文本转化为适合模型训练和分类的特征向量。
+3. **问题**: 调用 add_many 方法添加多个 token 时，实际是通过循环调用___方法实现的。  
+   **答案**: `add_token`
 
-## 四、特征构建过程
-### （一）高频词特征选择
-1. 对所有训练邮件文本中的词语出现频率进行统计。
-2. 从统计结果中挑选出出现频率最高的top_k个词语作为特征。
-3. 将每封邮件表示为这top_k个词语的出现次数向量。
-4. **数学表达**：X[i][j] = count(word_j \ in \ document_i)，其中X[i][j]表示第i封邮件中第j个特征词的出现次数。
+## CBOWVectorizer 类
 
-### （二）TF-IDF特征加权
-1. **计算词频（TF）**：统计每个词语在单封邮件中出现的频率，即TF = {词在文档中出现的次数}/{文档中词语的总次数}。
-2. **计算逆文档频率（IDF）**：IDF = log({总文档数}/{包含该词的文档数})，它衡量了一个词语在整个文档集合中的重要性。
-3. **计算TF-IDF**：TF-IDF = TF * IDF，通过两者乘积突出在特定文档中频繁出现且在其他文档中较少出现的词语。
-4. 选取TF-IDF值最高的top_k个特征。
-5. **数学表达**：X[i][j] = TF(word_j in document_i) *IDF(word_j)，X[i][j]表示i封邮件中第j个特征词的TF-IDF值。
+4. **问题**: vectorize 方法中，当 vector_length <0 时，最终向源长宽等于 __的长度。  
+   **答案**: `原始文本`
 
-### （三）差异对比
-| 特征类型 | 缺点 | 优点 |
-| ---- | ---- | ---- |
-| 高频词 | 无法有效区分不同词语在分类中的重要程度差异，常见词可能会对分类结果产生较大干扰 | 计算过程简单直接，易于实现和理解 |
-| TF-IDF | 计算过程相对复杂，涉及到词频和逆文档频率的计算，计算量较大 | 能够根据词语在文档集合中的分布情况，准确反映其重要性，降低常见词的权重 |
+5. **问题**: from_dataframe 方法构建到表层，会遍历 Dataframe 中 __和 __两列的内容。  
+   **答案**: `text`, `label`
 
-## 五、特征模式切换方法
-在代码中，通过设置`feature_type`参数来灵活选择特征提取方式：
-```python
-# 使用高频词特征
-features, vectorizer = get_features(texts, feature_type='frequency')
+6. **问题**: out_vectorifier(index)的第9列名为 set(&new, vocib, ___.  
+   **答案**: `vocab_index`
 
-# 使用TF-IDF特征
-features, vectorizer = get_features(texts, feature_type='tfidf')
-```
- 
-## 六、 运行结果 
- 
-### 1. classif运行结果
-<img src="https://github.com/zss444/GitDemo/blob/master/341.png">
-  
-### 2. TF-IDF运行结果
+## CBOWDataset 类
 
- <img src="https://github.com/zss444/GitDemo/blob/master/22.png">
+7. **问题**: _max_seq_length 通过计算所有 context 列的 __的最大值得出。  
+   **答案**: `长度`
 
- 
-### 3. 样本平衡处理运行结果
- <img src="https://github.com/zss444/GitDemo/blob/master/44.png">
+8. **问题**: set_spit 方法通过 self_lookup_dict 选择对应的 __和 __.  
+   **答案**: `训练集`, `测试集`
 
- 
-### 4. 增加模型评估指标运行结果
- <img src="https://github.com/zss444/GitDemo/blob/master/55.png">
+9. **问题**: __getitem__是目的字符串，y_target 通过查找 __列的 token 得到。  
+   **答案**: `label`
+
+## 模型结构
+
+10. **问题**: CBOWClassifier 的 forward 中，x_embedded_sum 的计算方式是 embeddings(x_in), __(&len=1)。  
+    **答案**: `sum(dim=1)`
+
+11. **问题**: 模型输出层包含 of_out_features 等于 __参数的值。  
+    **答案**: `num_classes`
+
+## 训练流程
+
+12. **问题**: generate_batches 函数通过 PyTorch 的 __类实现批量加载。  
+    **答案**: `DataLoader`
+
+13. **问题**: 训练时 classifier.sum()的作用是启用 __和 __模式。  
+    **答案**: `训练`, `dropout`
+
+14. **问题**: 反向传播前必须执行 __,zero_grad()的空梯度。  
+    **答案**: `optimizer`
+
+15. **问题**: compute_accuracy 中 y_pred_values 通过 __方法获取预测类别。  
+    **答案**: `torch.max()`
+
+## 训练状态管理
+
+16. **问题**: make_train_state 中 early_stopping_test_val 初始化为 ___.  
+    **答案**: `float('inf')`
+
+17. **问题**: update_train_state 在线做 __次验证相关未下调的触发异常。  
+    **答案**: `n` (具体次数取决于实现)
+
+18. **问题**: 当验证相关下调时，early_stopping_step 会被重新为 ___.  
+    **答案**: `0`
+
+## 设备与随机种子
+
+19. **问题**: set_seed_s everywhere 中与 CUDA 相关的设置是 __,manual_seed_s(leced)。  
+    **答案**: `torch.cuda`
+
+20. **问题**: seq.delete 的值很慢 __,st_y_calable()确定。  
+    **答案**: `由stable()`
+
+## 推理与测试
+
+21. **问题**: get_closest 函数中排除计算的目标副本总是通过 continue 判断 word = __实现的。  
+    **答案**: `target_word`
+
+22. **问题**: 测试程序中的一定要调用 __方法使用 dropout。  
+    **答案**: `eval()`
+
+## 关键参数
+
+23. **问题**: CBOWClassifier 的 padding_idx 参数默认值为 ___.  
+    **答案**: `0`
+
+24. **问题**: seq 中控制语句最重要的参数是 ___.  
+    **答案**: `max_length`
+
+25. **问题**: 学习非阻塞策略 Reduced.RonPatterns 的概念条件是验证损失 __（增加/减少）。  
+    **答案**: `增加`
